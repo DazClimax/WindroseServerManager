@@ -37,6 +37,20 @@
 
                 <Border Classes="divider" />
 
+                <StackPanel Spacing="10">
+                    <CheckBox Content="{DynamicResource ServerControl.UpdateBeforeRestart}"
+                              IsChecked="{Binding RestartInstallUpdateBeforeStart}" />
+                    <CheckBox Content="{DynamicResource ServerControl.BroadcastBeforeRestart}"
+                              IsChecked="{Binding RestartBroadcastEnabled}" />
+                    <TextBox Text="{Binding RestartBroadcastMessage}"
+                             IsEnabled="{Binding RestartBroadcastEnabled}"
+                             PlaceholderText="{DynamicResource ServerControl.BroadcastMessage.Placeholder}" />
+                    <TextBlock Classes="caption" TextWrapping="Wrap"
+                               Text="{DynamicResource ServerControl.BroadcastMessage.Hint}" />
+                </StackPanel>
+
+                <Border Classes="divider" />
+
                 <TextBlock Classes="section-header" Text="{DynamicResource ServerControl.AutoThresholds}" />
                 <StackPanel Spacing="8">
                     <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">

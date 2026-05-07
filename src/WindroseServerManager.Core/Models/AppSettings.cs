@@ -38,6 +38,11 @@ public sealed class AppSettings
     public List<DayOfWeek> RestartDays { get; set; } = new();
     /// <summary>Vorwarnzeit in Minuten vor einem geplanten Restart (Toast). 0 = keine Vorwarnung.</summary>
     public int RestartWarnMinutes { get; set; } = 5;
+    /// <summary>Runs SteamCMD update while the server is stopped before automated restarts start it again.</summary>
+    public bool RestartInstallUpdateBeforeStart { get; set; } = false;
+    /// <summary>Sends a WindrosePlus RCON broadcast before automated restarts. Requires WindrosePlus.</summary>
+    public bool RestartBroadcastEnabled { get; set; } = false;
+    public string RestartBroadcastMessage { get; set; } = "Server restartet in {minutes} Minuten. Grund: {reason}";
 
     // Auto-Restart-Schwellen
     public bool AutoRestartOnHighRamEnabled { get; set; } = false;

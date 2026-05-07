@@ -24,6 +24,8 @@ public sealed class RestartScheduler : BackgroundService
     private readonly IServerProcessService _server;
     private readonly IMetricsService _metrics;
     private readonly IServerEventLog _events;
+    private readonly IServerInstallService _installer;
+    private readonly IWindrosePlusApiService _windrosePlusApi;
 
     private DateTime _lastTriggerDate = DateTime.MinValue;
     private DateTime _lastWarnDate = DateTime.MinValue;
@@ -36,13 +38,17 @@ public sealed class RestartScheduler : BackgroundService
         IAppSettingsService settings,
         IServerProcessService server,
         IMetricsService metrics,
-        IServerEventLog events)
+        IServerEventLog events,
+        IServerInstallService installer,
+        IWindrosePlusApiService windrosePlusApi)
     {
         _logger = logger;
         _settings = settings;
         _server = server;
         _metrics = metrics;
         _events = events;
+        _installer = installer;
+        _windrosePlusApi = windrosePlusApi;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -58,6 +64,7 @@ public sealed class RestartScheduler : BackgroundService
                 if (ShouldWarnNow(now))
                 {
                     var mins = Math.Max(0, _settings.Current.RestartWarnMinutes);
+                    await SendRestartBroadcastAsync(mins, "Geplanter Restart.", stoppingToken).ConfigureAwait(false);
                     RestartNotified?.Invoke(new RestartEvent(
                         RestartTrigger.ScheduledWarning,
                         $"Geplanter Restart in {mins} Minuten."));
@@ -176,6 +183,7 @@ public sealed class RestartScheduler : BackgroundService
     {
         _logger.LogInformation("Restart trigger={Trigger} reason={Reason}", trigger, reason);
         RestartNotified?.Invoke(new RestartEvent(trigger, reason));
+        await SendRestartBroadcastAsync(0, reason, ct).ConfigureAwait(false);
 
         var eventType = trigger switch
         {
@@ -192,6 +200,9 @@ public sealed class RestartScheduler : BackgroundService
         try { await Task.Delay(TimeSpan.FromSeconds(10), ct).ConfigureAwait(false); }
         catch (OperationCanceledException) { return; }
 
+        if (_settings.Current.RestartInstallUpdateBeforeStart)
+            await InstallUpdateBeforeRestartAsync(ct).ConfigureAwait(false);
+
         try
         {
             await _server.StartAsync(ct).ConfigureAwait(false);
@@ -200,6 +211,77 @@ public sealed class RestartScheduler : BackgroundService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Scheduled restart: start failed");
+        }
+    }
+
+    private bool IsWindrosePlusActive(string serverDir)
+    {
+        if (string.IsNullOrWhiteSpace(serverDir)) return false;
+        var full = Path.GetFullPath(serverDir).TrimEnd('\\', '/');
+        return _settings.Current.WindrosePlusActiveByServer.GetValueOrDefault(full, false)
+            || _settings.Current.WindrosePlusActiveByServer.GetValueOrDefault(full + "\\", false)
+            || _settings.Current.WindrosePlusActiveByServer.GetValueOrDefault(serverDir, false);
+    }
+
+    private async Task SendRestartBroadcastAsync(int minutes, string reason, CancellationToken ct)
+    {
+        var s = _settings.Current;
+        if (!s.RestartBroadcastEnabled) return;
+
+        var serverDir = _settings.ActiveServerDir;
+        if (!IsWindrosePlusActive(serverDir))
+        {
+            _logger.LogWarning("Restart broadcast skipped: WindrosePlus is not active for {Dir}", serverDir);
+            return;
+        }
+
+        var template = string.IsNullOrWhiteSpace(s.RestartBroadcastMessage)
+            ? "Server restartet in {minutes} Minuten. Grund: {reason}"
+            : s.RestartBroadcastMessage;
+        var message = template
+            .Replace("{minutes}", minutes.ToString(System.Globalization.CultureInfo.InvariantCulture), StringComparison.OrdinalIgnoreCase)
+            .Replace("{reason}", reason, StringComparison.OrdinalIgnoreCase);
+
+        try
+        {
+            var command = _windrosePlusApi.BuildBroadcastCommand(message);
+            await _windrosePlusApi.RconAsync(serverDir, command, ct).ConfigureAwait(false);
+            _logger.LogInformation("Restart broadcast sent: {Message}", message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Restart broadcast failed");
+        }
+    }
+
+    private async Task InstallUpdateBeforeRestartAsync(CancellationToken ct)
+    {
+        var installDir = _settings.ActiveServerDir;
+        if (string.IsNullOrWhiteSpace(installDir))
+        {
+            _logger.LogWarning("Automated restart update skipped: active server dir is empty");
+            return;
+        }
+
+        _logger.LogInformation("Installing server update before automated restart for {Dir}", installDir);
+        await _events.AppendAsync(new ServerEvent(DateTime.UtcNow, ServerEventType.ScheduledRestart, "Server-Update vor Restart wird eingespielt."), ct)
+            .ConfigureAwait(false);
+
+        try
+        {
+            await foreach (var progress in _installer.InstallOrUpdateAsync(installDir, ct).ConfigureAwait(false))
+            {
+                if (!string.IsNullOrWhiteSpace(progress.Message))
+                    _logger.LogInformation("Restart update: {Phase} {Message}", progress.Phase, progress.Message);
+                if (!string.IsNullOrWhiteSpace(progress.LogLine))
+                    _logger.LogDebug("Restart update: {Line}", progress.LogLine);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Automated restart update failed; starting server anyway");
+            await _events.AppendAsync(new ServerEvent(DateTime.UtcNow, ServerEventType.ScheduledRestart, $"Server-Update vor Restart fehlgeschlagen: {ex.Message}"), ct)
+                .ConfigureAwait(false);
         }
     }
 }

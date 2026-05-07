@@ -204,6 +204,10 @@
     <sys:String x:Key="ServerControl.ClockWarn">warning</sys:String>
     <sys:String x:Key="ServerControl.MinBefore">min before</sys:String>
     <sys:String x:Key="ServerControl.Weekdays">Weekdays (all selected = daily)</sys:String>
+    <sys:String x:Key="ServerControl.UpdateBeforeRestart">Install server update before automated restart</sys:String>
+    <sys:String x:Key="ServerControl.BroadcastBeforeRestart">Send message to all players</sys:String>
+    <sys:String x:Key="ServerControl.BroadcastMessage.Placeholder">Server restarts in {minutes} minutes. Reason: {reason}</sys:String>
+    <sys:String x:Key="ServerControl.BroadcastMessage.Hint">Requires WindrosePlus/RCON. Placeholders: {minutes}, {reason}</sys:String>
     <sys:String x:Key="Weekday.Mon">Mon</sys:String>
     <sys:String x:Key="Weekday.Tue">Tue</sys:String>
     <sys:String x:Key="Weekday.Wed">Wed</sys:String>

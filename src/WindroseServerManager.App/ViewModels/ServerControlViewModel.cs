@@ -30,6 +30,9 @@ public partial class ServerControlViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private string _dailyRestartTime = "04:00";
     [ObservableProperty] private int _restartWarnMinutes = 5;
     [ObservableProperty] private bool _restartMon, _restartTue, _restartWed, _restartThu, _restartFri, _restartSat, _restartSun;
+    [ObservableProperty] private bool _restartInstallUpdateBeforeStart;
+    [ObservableProperty] private bool _restartBroadcastEnabled;
+    [ObservableProperty] private string _restartBroadcastMessage = string.Empty;
 
     [ObservableProperty] private bool _autoRestartOnHighRamEnabled;
     [ObservableProperty] private int _autoRestartRamThresholdPercent = 80;
@@ -82,6 +85,11 @@ public partial class ServerControlViewModel : ViewModelBase, IDisposable
         ScheduledRestartEnabled = settings.Current.ScheduledRestartEnabled;
         DailyRestartTime = settings.Current.DailyRestartTime;
         RestartWarnMinutes = settings.Current.RestartWarnMinutes;
+        RestartInstallUpdateBeforeStart = settings.Current.RestartInstallUpdateBeforeStart;
+        RestartBroadcastEnabled = settings.Current.RestartBroadcastEnabled;
+        RestartBroadcastMessage = string.IsNullOrWhiteSpace(settings.Current.RestartBroadcastMessage)
+            ? "Server restartet in {minutes} Minuten. Grund: {reason}"
+            : settings.Current.RestartBroadcastMessage;
 
         var days = settings.Current.RestartDays ?? new List<DayOfWeek>();
         // Leere Liste = täglich → alle Tage aktiv.
@@ -288,6 +296,11 @@ public partial class ServerControlViewModel : ViewModelBase, IDisposable
             s.ScheduledRestartEnabled = ScheduledRestartEnabled;
             s.DailyRestartTime = DailyRestartTime;
             s.RestartWarnMinutes = Math.Max(0, RestartWarnMinutes);
+            s.RestartInstallUpdateBeforeStart = RestartInstallUpdateBeforeStart;
+            s.RestartBroadcastEnabled = RestartBroadcastEnabled;
+            s.RestartBroadcastMessage = string.IsNullOrWhiteSpace(RestartBroadcastMessage)
+                ? "Server restartet in {minutes} Minuten. Grund: {reason}"
+                : RestartBroadcastMessage.Trim();
             // 7 von 7 Tagen aktiv ist semantisch "täglich" → leere Liste speichern.
             s.RestartDays = days.Count == 7 ? new List<DayOfWeek>() : days;
             s.AutoRestartOnHighRamEnabled = AutoRestartOnHighRamEnabled;
