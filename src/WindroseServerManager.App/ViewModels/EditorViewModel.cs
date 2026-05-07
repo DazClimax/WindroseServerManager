@@ -162,6 +162,7 @@ public partial class EditorViewModel : ViewModelBase
         try
         {
             await _api.WriteConfigAsync(serverDir, cfg, CancellationToken.None);
+            await SyncDashboardPortSettingAsync(serverDir, cfg);
             _toasts.Success(Loc.Get("Editor.Saved"));
 
             if (_proc.Status == ServerStatus.Running)
@@ -171,6 +172,41 @@ public partial class EditorViewModel : ViewModelBase
         {
             Log.Warning(ex, "Editor save failed");
             _toasts.Error(Loc.Get("Editor.Error.Save"));
+        }
+    }
+
+    private async Task SyncDashboardPortSettingAsync(string serverDir, WindrosePlusConfig cfg)
+    {
+        if (!TryReadInt(cfg.Server.GetValueOrDefault("http_port"), out var port) || port <= 0)
+            return;
+
+        await _settings.UpdateAsync(s =>
+        {
+            s.WindrosePlusDashboardPortByServer[serverDir] = port;
+            var normalizedDir = System.IO.Path.GetFullPath(serverDir).TrimEnd('\\', '/');
+            s.WindrosePlusDashboardPortByServer[normalizedDir] = port;
+        });
+    }
+
+    private static bool TryReadInt(object? value, out int result)
+    {
+        switch (value)
+        {
+            case int i:
+                result = i;
+                return true;
+            case long l when l >= int.MinValue && l <= int.MaxValue:
+                result = (int)l;
+                return true;
+            case System.Text.Json.JsonElement { ValueKind: System.Text.Json.JsonValueKind.Number } el when el.TryGetInt32(out var parsed):
+                result = parsed;
+                return true;
+            case string s when int.TryParse(s, out var parsedString):
+                result = parsedString;
+                return true;
+            default:
+                result = 0;
+                return false;
         }
     }
 }

@@ -605,6 +605,8 @@ public sealed class WindrosePlusService : IWindrosePlusService
         var dashboardPort = _settings.Current.WindrosePlusDashboardPortByServer.GetValueOrDefault(serverDirFull, 0);
         if (dashboardPort <= 0)
             dashboardPort = _settings.Current.WindrosePlusDashboardPortByServer.GetValueOrDefault(serverInstallDir, 0);
+        if (dashboardPort > 0)
+            await SyncDashboardPortConfigAsync(serverDirFull, dashboardPort, ct).ConfigureAwait(false);
         var portArg = dashboardPort > 0 ? $" -Port {dashboardPort}" : "";
         var psi = new System.Diagnostics.ProcessStartInfo
         {
@@ -623,6 +625,57 @@ public sealed class WindrosePlusService : IWindrosePlusService
         _dashboardProcesses[serverDirFull] = proc;
 
         await Task.CompletedTask;
+    }
+
+    private async Task SyncDashboardPortConfigAsync(string serverDirFull, int dashboardPort, CancellationToken ct)
+    {
+        var configPath = Path.Combine(serverDirFull, "windrose_plus.json");
+        if (!File.Exists(configPath)) return;
+
+        try
+        {
+            var json = await File.ReadAllTextAsync(configPath, ct).ConfigureAwait(false);
+            var config = JsonSerializer.Deserialize<WindrosePlusConfig>(json,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            if (config is null) return;
+
+            if (TryReadInt(config.Server.GetValueOrDefault("http_port"), out var existingPort)
+                && existingPort == dashboardPort)
+                return;
+
+            config.Server["http_port"] = dashboardPort;
+            var tmpPath = configPath + ".tmp";
+            var updatedJson = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
+            await File.WriteAllTextAsync(tmpPath, updatedJson, ct).ConfigureAwait(false);
+            File.Move(tmpPath, configPath, overwrite: true);
+            _logger.LogInformation("Synchronized WindrosePlus http_port to {Port} in {Path}", dashboardPort, configPath);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to synchronize WindrosePlus http_port in {Path}", configPath);
+        }
+    }
+
+    private static bool TryReadInt(object? value, out int result)
+    {
+        switch (value)
+        {
+            case int i:
+                result = i;
+                return true;
+            case long l when l >= int.MinValue && l <= int.MaxValue:
+                result = (int)l;
+                return true;
+            case JsonElement { ValueKind: JsonValueKind.Number } el when el.TryGetInt32(out var parsed):
+                result = parsed;
+                return true;
+            case string s when int.TryParse(s, out var parsedString):
+                result = parsedString;
+                return true;
+            default:
+                result = 0;
+                return false;
+        }
     }
 
     public void StopDashboard(string serverInstallDir)
