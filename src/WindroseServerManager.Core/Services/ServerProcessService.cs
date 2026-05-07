@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Text;
 using Microsoft.Extensions.Logging;
 using WindroseServerManager.Core.Models;
 
@@ -19,6 +20,7 @@ public sealed class ServerProcessService : IServerProcessService, IAsyncDisposab
     private readonly ConcurrentQueue<ServerLogLine> _logBuffer = new();
     private Process? _process;
     private CancellationTokenSource? _monitorCts;
+    private CancellationTokenSource? _logTailCts;
     private string _startedServerDir = string.Empty;
 
     public ServerProcessService(
@@ -127,6 +129,7 @@ public sealed class ServerProcessService : IServerProcessService, IAsyncDisposab
             var info = BuildInstallInfo(dir);
             var (exe, wplusArgs) = _windrosePlus.ResolveLauncher(dir, info);
             var args = CombineArgs(BuildLaunchArgs(_settings.Current), wplusArgs);
+            StartServerLogTail(dir, includeRecentTail: false);
 
             var psi = new ProcessStartInfo
             {
@@ -353,6 +356,7 @@ public sealed class ServerProcessService : IServerProcessService, IAsyncDisposab
                         proc.Exited += OnExited;
                     }
 
+                    StartServerLogTail(installDir, includeRecentTail: true);
                     TransitionTo(ServerStatus.Running);
                     _logger.LogInformation("Attached to existing server process pid={Pid} name={Name}", proc.Id, name);
                     return true;
@@ -469,6 +473,10 @@ public sealed class ServerProcessService : IServerProcessService, IAsyncDisposab
         _monitorCts?.Dispose();
         _monitorCts = null;
 
+        try { _logTailCts?.Cancel(); } catch { /* ignore */ }
+        _logTailCts?.Dispose();
+        _logTailCts = null;
+
         if (_process is not null)
         {
             _process.Exited -= OnExited;
@@ -487,6 +495,121 @@ public sealed class ServerProcessService : IServerProcessService, IAsyncDisposab
     }
 
     private void AppendSystem(string text) => Append(ServerLogLine.System(text));
+
+    private void StartServerLogTail(string installDir, bool includeRecentTail)
+    {
+        try { _logTailCts?.Cancel(); } catch { /* ignore */ }
+        _logTailCts?.Dispose();
+
+        _logTailCts = new CancellationTokenSource();
+        var token = _logTailCts.Token;
+        _ = Task.Run(() => TailServerLogAsync(installDir, includeRecentTail, token), token);
+    }
+
+    private async Task TailServerLogAsync(string installDir, bool includeRecentTail, CancellationToken ct)
+    {
+        string? currentPath = null;
+        long position = 0;
+        string pending = string.Empty;
+
+        while (!ct.IsCancellationRequested)
+        {
+            try
+            {
+                var path = ResolveActiveLogFile(installDir);
+                if (path is not null)
+                {
+                    if (!string.Equals(path, currentPath, StringComparison.OrdinalIgnoreCase))
+                    {
+                        currentPath = path;
+                        pending = string.Empty;
+                        position = includeRecentTail ? GetTailStartOffset(path, 128 * 1024) : GetFileLength(path);
+                        includeRecentTail = false;
+                        AppendSystem($"=== Live-Logdatei: {path}");
+                    }
+
+                    ReadAppendedLogLines(path, ref position, ref pending);
+                }
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                return;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "Server log tail failed");
+            }
+
+            try { await Task.Delay(1000, ct).ConfigureAwait(false); }
+            catch (OperationCanceledException) { return; }
+        }
+    }
+
+    private static string? ResolveActiveLogFile(string installDir)
+    {
+        var logDir = Path.Combine(installDir, "R5", "Saved", "Logs");
+        if (!Directory.Exists(logDir)) return null;
+
+        return Directory.EnumerateFiles(logDir, "R5*.log")
+            .Select(p => new FileInfo(p))
+            .Where(f => !f.Name.Contains("backup", StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(f => f.LastWriteTimeUtc)
+            .Select(f => f.FullName)
+            .FirstOrDefault();
+    }
+
+    private static long GetFileLength(string path)
+    {
+        try { return new FileInfo(path).Length; }
+        catch { return 0; }
+    }
+
+    private static long GetTailStartOffset(string path, int maxBytes)
+    {
+        try
+        {
+            var length = new FileInfo(path).Length;
+            return Math.Max(0, length - maxBytes);
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+
+    private void ReadAppendedLogLines(string path, ref long position, ref string pending)
+    {
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read,
+            FileShare.ReadWrite | FileShare.Delete);
+
+        if (stream.Length < position)
+            position = 0;
+        if (stream.Length == position)
+            return;
+
+        stream.Seek(position, SeekOrigin.Begin);
+        using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true,
+            bufferSize: 8192, leaveOpen: true);
+        var text = reader.ReadToEnd();
+        position = stream.Position;
+
+        if (string.IsNullOrEmpty(text))
+            return;
+
+        var combined = pending + text.Replace("\r\n", "\n").Replace('\r', '\n');
+        var complete = combined.EndsWith('\n');
+        var lines = combined.Split('\n');
+        var count = complete ? lines.Length : lines.Length - 1;
+
+        for (var i = 0; i < count; i++)
+        {
+            var line = lines[i];
+            if (line.Length == 0) continue;
+            Append(new ServerLogLine(DateTime.UtcNow, LogStream.Stdout, line));
+        }
+
+        pending = complete ? string.Empty : lines[^1];
+    }
 
     private void TransitionTo(ServerStatus next)
     {
