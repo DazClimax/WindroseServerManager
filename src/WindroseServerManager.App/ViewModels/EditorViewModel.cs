@@ -162,7 +162,7 @@ public partial class EditorViewModel : ViewModelBase
         try
         {
             await _api.WriteConfigAsync(serverDir, cfg, CancellationToken.None);
-            await SyncDashboardPortSettingAsync(serverDir, cfg);
+            await SyncWindrosePlusSettingsAsync(serverDir, cfg);
             _toasts.Success(Loc.Get("Editor.Saved"));
 
             if (_proc.Status == ServerStatus.Running)
@@ -175,18 +175,35 @@ public partial class EditorViewModel : ViewModelBase
         }
     }
 
-    private async Task SyncDashboardPortSettingAsync(string serverDir, WindrosePlusConfig cfg)
+    private async Task SyncWindrosePlusSettingsAsync(string serverDir, WindrosePlusConfig cfg)
     {
-        if (!TryReadInt(cfg.Server.GetValueOrDefault("http_port"), out var port) || port <= 0)
-            return;
+        var hasPort = TryReadInt(cfg.Server.GetValueOrDefault("http_port"), out var port) && port > 0;
+        var password = TryReadString(cfg.Rcon.GetValueOrDefault("password"));
+        if (!hasPort && string.IsNullOrWhiteSpace(password)) return;
 
         await _settings.UpdateAsync(s =>
         {
-            s.WindrosePlusDashboardPortByServer[serverDir] = port;
             var normalizedDir = System.IO.Path.GetFullPath(serverDir).TrimEnd('\\', '/');
-            s.WindrosePlusDashboardPortByServer[normalizedDir] = port;
+            if (hasPort)
+            {
+                s.WindrosePlusDashboardPortByServer[serverDir] = port;
+                s.WindrosePlusDashboardPortByServer[normalizedDir] = port;
+            }
+            if (!string.IsNullOrWhiteSpace(password))
+            {
+                s.WindrosePlusRconPasswordByServer[serverDir] = password;
+                s.WindrosePlusRconPasswordByServer[normalizedDir] = password;
+            }
         });
     }
+
+    private static string? TryReadString(object? value) =>
+        value switch
+        {
+            string s => s,
+            System.Text.Json.JsonElement { ValueKind: System.Text.Json.JsonValueKind.String } el => el.GetString(),
+            _ => null
+        };
 
     private static bool TryReadInt(object? value, out int result)
     {

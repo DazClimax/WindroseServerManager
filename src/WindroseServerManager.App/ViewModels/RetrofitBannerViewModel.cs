@@ -51,8 +51,55 @@ public partial class RetrofitBannerViewModel : ViewModelBase, IWindrosePlusOptIn
         _wplusApi = wplusApi;
         _settings = settings;
         _toasts = toasts;
-        RconPassword = RconPasswordGenerator.Generate(24);
-        DashboardPort = FreePortProbe.FindFreePort();
+        InitializeExistingValues();
+    }
+
+    private void InitializeExistingValues()
+    {
+        var cfg = _wplusApi.ReadConfig(ServerInstallDir);
+
+        RconPassword =
+            TryReadString(cfg?.Rcon.GetValueOrDefault("password"))
+            ?? _settings.Current.WindrosePlusRconPasswordByServer.GetValueOrDefault(ServerInstallDir, string.Empty);
+        if (string.IsNullOrWhiteSpace(RconPassword))
+            RconPassword = RconPasswordGenerator.Generate(24);
+
+        if (!TryReadInt(cfg?.Server.GetValueOrDefault("http_port"), out var port) || port <= 0)
+            port = _settings.Current.WindrosePlusDashboardPortByServer.GetValueOrDefault(ServerInstallDir, 0);
+        DashboardPort = port > 0 ? port : FreePortProbe.FindFreePort();
+
+        AdminSteamId = _settings.Current.WindrosePlusAdminSteamIdByServer
+            .GetValueOrDefault(ServerInstallDir, string.Empty);
+    }
+
+    private static string? TryReadString(object? value) =>
+        value switch
+        {
+            string s => s,
+            System.Text.Json.JsonElement { ValueKind: System.Text.Json.JsonValueKind.String } el => el.GetString(),
+            _ => null
+        };
+
+    private static bool TryReadInt(object? value, out int result)
+    {
+        switch (value)
+        {
+            case int i:
+                result = i;
+                return true;
+            case long l when l >= int.MinValue && l <= int.MaxValue:
+                result = (int)l;
+                return true;
+            case System.Text.Json.JsonElement { ValueKind: System.Text.Json.JsonValueKind.Number } el when el.TryGetInt32(out var parsed):
+                result = parsed;
+                return true;
+            case string s when int.TryParse(s, out var parsedString):
+                result = parsedString;
+                return true;
+            default:
+                result = 0;
+                return false;
+        }
     }
 
     partial void OnIsOptingInChanged(bool value)
