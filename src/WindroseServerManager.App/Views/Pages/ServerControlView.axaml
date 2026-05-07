@@ -103,7 +103,7 @@
             </Grid>
         </Border>
 
-        <Border Classes="card" MinHeight="420">
+        <Border Classes="card" Height="520">
             <Grid RowDefinitions="Auto,Auto,Auto,*">
                 <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,12">
                     <TextBlock Grid.Column="0" Classes="section-header" Text="{DynamicResource ServerControl.LiveLog}" VerticalAlignment="Center" />
@@ -127,7 +127,10 @@
                     <RadioButton GroupName="LogFilter" Content="{DynamicResource ServerControl.Filter.WarningPlus}" IsChecked="{Binding IsWarningPlusFilter}" />
                     <RadioButton GroupName="LogFilter" Content="{DynamicResource ServerControl.Filter.ErrorOnly}" IsChecked="{Binding IsErrorOnlyFilter}" />
                 </StackPanel>
-                <ScrollViewer Grid.Row="3" svc:AutoScrollBehavior.IsEnabled="True">
+                <ScrollViewer Grid.Row="3"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Auto"
+                              svc:AutoScrollBehavior.IsEnabled="True">
                     <ItemsControl ItemsSource="{Binding FilteredLog}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
