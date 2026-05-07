@@ -81,6 +81,7 @@
                                                             <Button Grid.Column="2" Classes="icon-btn"
                                                                     Content="&#xE777;"
                                                                     Command="{Binding ResetCommand}"
+                                                                    IsEnabled="{Binding IsEnabled}"
                                                                     ToolTip.Tip="{DynamicResource Editor.Reset.Tip}"
                                                                     VerticalAlignment="Center" />
                                                         </Grid>
@@ -95,10 +96,12 @@
                                                                     TickFrequency="0.1"
                                                                     SmallChange="0.1"
                                                                     LargeChange="0.5"
+                                                                    IsEnabled="{Binding IsEnabled}"
                                                                     VerticalAlignment="Center" />
                                                             <TextBox Grid.Column="1"
                                                                      Classes="mono"
                                                                      Text="{Binding RawValue, Mode=TwoWay}"
+                                                                     IsEnabled="{Binding IsEnabled}"
                                                                      HorizontalContentAlignment="Center" />
                                                         </Grid>
 
@@ -114,11 +117,13 @@
                                                             </StackPanel>
                                                             <ToggleSwitch Grid.Column="1"
                                                                           IsChecked="{Binding BoolValue}"
+                                                                          IsEnabled="{Binding IsEnabled}"
                                                                           VerticalAlignment="Center"
                                                                           OnContent="" OffContent="" />
                                                             <Button Grid.Column="2" Classes="icon-btn"
                                                                     Content="&#xE777;"
                                                                     Command="{Binding ResetCommand}"
+                                                                    IsEnabled="{Binding IsEnabled}"
                                                                     ToolTip.Tip="{DynamicResource Editor.Reset.Tip}"
                                                                     VerticalAlignment="Center" />
                                                         </Grid>
@@ -162,11 +167,13 @@
                                                                 </Grid>
                                                                 <!-- Normal TextBox (int / string, not password) -->
                                                                 <TextBox IsVisible="{Binding !IsPassword}"
+                                                                         IsEnabled="{Binding IsEnabled}"
                                                                          Text="{Binding RawValue, Mode=TwoWay}" />
                                                             </StackPanel>
                                                             <Button Grid.Column="1" Classes="icon-btn"
                                                                     Content="&#xE777;"
                                                                     Command="{Binding ResetCommand}"
+                                                                    IsEnabled="{Binding IsEnabled}"
                                                                     ToolTip.Tip="{DynamicResource Editor.Reset.Tip}"
                                                                     VerticalAlignment="Top"
                                                                     Margin="0,22,0,0" />

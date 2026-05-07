@@ -9,7 +9,10 @@ namespace WindroseServerManager.Core.Services;
 public sealed record ConfigEntrySchema(
     string Category, string Key, string Type,
     double? Min, double? Max, object? Default, string DescriptionKey,
-    string? JsonSection = null);
+    string? JsonSection = null)
+{
+    public bool IsEnabled { get; init; } = true;
+}
 
 public static class WindrosePlusConfigSchema
 {
@@ -20,14 +23,14 @@ public static class WindrosePlusConfigSchema
         new("Server", "password",  "string", null, null,  "",    "Editor.Schema.RconPassword", "rcon"),
         new("Multipliers", "xp",              "float", 0.1, 100, 1.0, "Editor.Schema.Xp"),
         new("Multipliers", "loot",            "float", 0.1, 100, 1.0, "Editor.Schema.Loot"),
-        new("Multipliers", "stack_size",      "float", 0.1, 100, 1.0, "Editor.Schema.StackSize"),
+        new("Multipliers", "stack_size",      "float", 0.1, 100, 1.0, "Editor.Schema.StackSize") { IsEnabled = false },
         new("Multipliers", "craft_cost",      "float", 0.1, 100, 1.0, "Editor.Schema.CraftCost"),
         new("Multipliers", "crop_speed",      "float", 0.1, 100, 1.0, "Editor.Schema.CropSpeed"),
         new("Multipliers", "cooking_speed",   "float", 0.1, 100, 1.0, "Editor.Schema.CookingSpeed"),
         new("Multipliers", "harvest_yield",   "float", 0.1, 100, 1.0, "Editor.Schema.HarvestYield"),
-        new("Multipliers", "inventory_size",  "float", 0.1, 100, 1.0, "Editor.Schema.InventorySize"),
+        new("Multipliers", "inventory_size",  "float", 0.1, 100, 1.0, "Editor.Schema.InventorySize") { IsEnabled = false },
         new("Multipliers", "points_per_level","float", 0.1, 100, 1.0, "Editor.Schema.PointsPerLevel"),
-        new("Multipliers", "weight",          "float", 0.1, 100, 1.0, "Editor.Schema.Weight"),
+        new("Multipliers", "weight",          "float", 0.1, 100, 1.0, "Editor.Schema.Weight") { IsEnabled = false },
     };
 
     public static string? Validate(string key, string rawValue)

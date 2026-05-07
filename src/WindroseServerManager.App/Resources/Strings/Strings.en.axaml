@@ -707,7 +707,7 @@
     <sys:String x:Key="Editor.Schema.Loot.Name">Loot Amount</sys:String>
     <sys:String x:Key="Editor.Schema.Loot.Desc">Amount of items in chests and drops.</sys:String>
     <sys:String x:Key="Editor.Schema.StackSize.Name">Stack Size</sys:String>
-    <sys:String x:Key="Editor.Schema.StackSize.Desc">Maximum number of items per inventory slot.</sys:String>
+    <sys:String x:Key="Editor.Schema.StackSize.Desc">Disabled in Windrose+: currently no effect because stack and inventory changes can cause savegame issues.</sys:String>
     <sys:String x:Key="Editor.Schema.CraftCost.Name">Crafting Cost</sys:String>
     <sys:String x:Key="Editor.Schema.CraftCost.Desc">Resource requirements when crafting. 0.5x = half the material cost.</sys:String>
     <sys:String x:Key="Editor.Schema.CropSpeed.Name">Crop Growth</sys:String>
@@ -717,11 +717,11 @@
     <sys:String x:Key="Editor.Schema.HarvestYield.Name">Harvest Yield</sys:String>
     <sys:String x:Key="Editor.Schema.HarvestYield.Desc">Amount of resources per harvest or mining action.</sys:String>
     <sys:String x:Key="Editor.Schema.InventorySize.Name">Inventory Size</sys:String>
-    <sys:String x:Key="Editor.Schema.InventorySize.Desc">Number of available inventory slots per player.</sys:String>
+    <sys:String x:Key="Editor.Schema.InventorySize.Desc">Disabled in Windrose+: currently no effect because inventory slots can become part of the player save state.</sys:String>
     <sys:String x:Key="Editor.Schema.PointsPerLevel.Name">Points per Level</sys:String>
     <sys:String x:Key="Editor.Schema.PointsPerLevel.Desc">Number of skill points a player receives per level-up.</sys:String>
     <sys:String x:Key="Editor.Schema.Weight.Name">Carry Weight</sys:String>
-    <sys:String x:Key="Editor.Schema.Weight.Desc">Maximum carry weight for players. Affects how much can be carried.</sys:String>
+    <sys:String x:Key="Editor.Schema.Weight.Desc">Disabled in Windrose+: currently no effect. Use the advanced INI option MaxWeight for carry weight instead.</sys:String>
     <sys:String x:Key="Editor.OptOut.Title">Windrose+ Not Active</sys:String>
     <sys:String x:Key="Editor.OptOut.Desc">The config editor requires Windrose+.</sys:String>
 

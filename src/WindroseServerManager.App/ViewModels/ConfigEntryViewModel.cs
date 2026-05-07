@@ -22,6 +22,7 @@ public partial class ConfigEntryViewModel : ObservableObject
     public string DisplayName => Loc.Get(Schema.DescriptionKey + ".Name");
     public string Description => Loc.Get(Schema.DescriptionKey + ".Desc");
     public bool HasError => !string.IsNullOrEmpty(ErrorMessage);
+    public bool IsEnabled => Schema.IsEnabled;
 
     // Type discriminators for the view
     public bool IsFloat    => Schema.Type == "float";

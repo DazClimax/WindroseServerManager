@@ -707,7 +707,7 @@
     <sys:String x:Key="Editor.Schema.Loot.Name">Loot-Menge</sys:String>
     <sys:String x:Key="Editor.Schema.Loot.Desc">Menge der Gegenstände in Truhen und Drops.</sys:String>
     <sys:String x:Key="Editor.Schema.StackSize.Name">Stapelgröße</sys:String>
-    <sys:String x:Key="Editor.Schema.StackSize.Desc">Maximale Anzahl Gegenstände pro Inventar-Slot.</sys:String>
+    <sys:String x:Key="Editor.Schema.StackSize.Desc">Deaktiviert in Windrose+: aktuell ohne Wirkung, weil Stapel- und Inventarwerte Savegame-Probleme auslösen können.</sys:String>
     <sys:String x:Key="Editor.Schema.CraftCost.Name">Herstellungskosten</sys:String>
     <sys:String x:Key="Editor.Schema.CraftCost.Desc">Ressourcenbedarf beim Craften. 0,5x = halbierter Materialverbrauch.</sys:String>
     <sys:String x:Key="Editor.Schema.CropSpeed.Name">Pflanzenwachstum</sys:String>
@@ -717,11 +717,11 @@
     <sys:String x:Key="Editor.Schema.HarvestYield.Name">Ernteertrag</sys:String>
     <sys:String x:Key="Editor.Schema.HarvestYield.Desc">Menge der Ressourcen pro Ernte oder Abbau-Aktion.</sys:String>
     <sys:String x:Key="Editor.Schema.InventorySize.Name">Inventargröße</sys:String>
-    <sys:String x:Key="Editor.Schema.InventorySize.Desc">Anzahl verfügbarer Inventar-Slots je Spieler.</sys:String>
+    <sys:String x:Key="Editor.Schema.InventorySize.Desc">Deaktiviert in Windrose+: aktuell ohne Wirkung, weil Inventar-Slots Teil des Spieler-Savestates werden können.</sys:String>
     <sys:String x:Key="Editor.Schema.PointsPerLevel.Name">Punkte pro Level</sys:String>
     <sys:String x:Key="Editor.Schema.PointsPerLevel.Desc">Anzahl Skillpunkte die ein Spieler pro Level-Aufstieg erhält.</sys:String>
     <sys:String x:Key="Editor.Schema.Weight.Name">Traglast</sys:String>
-    <sys:String x:Key="Editor.Schema.Weight.Desc">Maximale Traglast der Spieler. Beeinflusst wie viel mitgetragen werden kann.</sys:String>
+    <sys:String x:Key="Editor.Schema.Weight.Desc">Deaktiviert in Windrose+: aktuell ohne Wirkung. Für Traglast stattdessen die erweiterte INI-Option MaxWeight nutzen.</sys:String>
     <sys:String x:Key="Editor.OptOut.Title">Windrose+ nicht aktiv</sys:String>
     <sys:String x:Key="Editor.OptOut.Desc">Der Konfigurations-Editor benötigt Windrose+.</sys:String>
 
