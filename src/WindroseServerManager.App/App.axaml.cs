@@ -157,11 +157,16 @@ public partial class App : Application
             }
 
             Log.Information("Auto-start: launching non-active server '{Name}' via {Target}", entry.Name, target);
+            var isBatch = string.Equals(System.IO.Path.GetExtension(target), ".bat", StringComparison.OrdinalIgnoreCase)
+                       || string.Equals(System.IO.Path.GetExtension(target), ".cmd", StringComparison.OrdinalIgnoreCase);
             var psi = new System.Diagnostics.ProcessStartInfo
             {
-                FileName = target,
+                FileName = isBatch ? "cmd.exe" : target,
+                Arguments = isBatch ? $"/c \"{target}\"" : "",
                 WorkingDirectory = entry.InstallDir,
-                UseShellExecute = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden,
             };
             // WP_NOPAUSE tells the bat wrapper not to "pause" on errors — we're headless.
             psi.EnvironmentVariables["WP_NOPAUSE"] = "1";

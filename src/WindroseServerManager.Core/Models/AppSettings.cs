@@ -24,7 +24,7 @@ public sealed class AppSettings
     public int GracefulShutdownSeconds { get; set; } = 5;
 
     // Launch-Args (strukturiert)
-    public bool LogEnabled { get; set; } = true;
+    public bool LogEnabled { get; set; } = false;
     public string ExtraLaunchArgs { get; set; } = "";
 
     /// <summary>Max. Zeilen im Live-Log-Puffer (UI). 500 / 2000 / 10000 sind typische Werte.</summary>

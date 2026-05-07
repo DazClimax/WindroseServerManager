@@ -383,7 +383,7 @@ public sealed partial class ServerInstallService : IServerInstallService
         var psi = new ProcessStartInfo
         {
             FileName = exe,
-            Arguments = "-log",
+            Arguments = "",
             WorkingDirectory = Path.GetDirectoryName(exe)!,
             UseShellExecute = false,
             CreateNoWindow = true,

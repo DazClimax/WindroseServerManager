@@ -10,7 +10,7 @@ public class AppSettingsTests
     {
         var s = new AppSettings();
 
-        Assert.True(s.LogEnabled);
+        Assert.False(s.LogEnabled);
         Assert.Equal(5, s.GracefulShutdownSeconds);
         Assert.Equal("4129620", s.SteamAppId);
         Assert.Equal("auto", s.Language);

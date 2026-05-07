@@ -272,7 +272,7 @@
     <sys:String x:Key="Settings.Language.German">Deutsch</sys:String>
     <sys:String x:Key="Settings.Language.English">English</sys:String>
     <sys:String x:Key="Settings.LaunchArgs.Title">Server start (launch args)</sys:String>
-    <sys:String x:Key="Settings.LaunchArgs.ConsoleLog">Enable console log (-log)</sys:String>
+    <sys:String x:Key="Settings.LaunchArgs.ConsoleLog">Open external console log window (-log)</sys:String>
     <sys:String x:Key="Settings.LaunchArgs.Extra">Additional launch args (optional)</sys:String>
     <sys:String x:Key="Settings.LaunchArgs.Extra.Placeholder">e.g. -NOSEAMLESSTRAVEL</sys:String>
     <sys:String x:Key="Settings.LaunchArgs.Hint">Windrose uses automatic NAT punch-through. Fixed ports are not supported — this field is for future undocked args.</sys:String>
