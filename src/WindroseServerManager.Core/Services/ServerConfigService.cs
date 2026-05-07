@@ -21,10 +21,12 @@ public sealed class ServerConfigService : IServerConfigService
     // Offiziell: {InstallDir}\R5\ServerDescription.json
     private static readonly string ServerDescriptionRelativeDir = "R5";
 
-    // Offizielle Struktur laut Windrose Community-Guide:
-    // {ServerInstallDir}\R5\Saved\SaveProfiles\Default\RocksDB\{GameVersion}\Worlds\{IslandId}\WorldDescription.json
-    private static readonly string RocksDbRelativeDir =
-        Path.Combine("R5", "Saved", "SaveProfiles", "Default", "RocksDB");
+    // Windrose currently stores worlds in RocksDB_v2. Older installs used RocksDB.
+    private static readonly string SaveProfilesRelativeDir =
+        Path.Combine("R5", "Saved", "SaveProfiles", "Default");
+
+    private const string RocksDbV2DirName = "RocksDB_v2";
+    private const string LegacyRocksDbDirName = "RocksDB";
 
     private readonly ILogger<ServerConfigService> _logger;
     private readonly IAppSettingsService _settings;
@@ -67,7 +69,8 @@ public sealed class ServerConfigService : IServerConfigService
     private string? ResolveWorldsRoot() => ResolveOrCreateWorldsRoot(createIfMissing: false);
 
     /// <summary>
-    /// Sucht den aktuellsten GameVersion-Unterordner unter {InstallDir}\R5\Saved\SaveProfiles\Default\RocksDB\.
+    /// Sucht den aktuellsten GameVersion-Unterordner unter dem aktuellen Windrose-Speicherordner.
+    /// RocksDB_v2 wird bevorzugt; RocksDB bleibt als Legacy-Fallback erhalten.
     /// Wenn keiner existiert und <paramref name="createIfMissing"/> true ist, wird ein Ordner
     /// mit einer aus DeploymentId abgeleiteten (oder Default-)GameVersion angelegt.
     /// </summary>
@@ -76,7 +79,8 @@ public sealed class ServerConfigService : IServerConfigService
         var root = GetConfigRoot();
         if (root is null) return null;
 
-        var rocksDbDir = Path.Combine(root, RocksDbRelativeDir);
+        var rocksDbDir = ResolveStorageRoot(root, createIfMissing);
+        if (rocksDbDir is null) return null;
 
         if (Directory.Exists(rocksDbDir))
         {
@@ -109,6 +113,19 @@ public sealed class ServerConfigService : IServerConfigService
             return null;
         }
         return target;
+    }
+
+    private string? ResolveStorageRoot(string installRoot, bool createIfMissing)
+    {
+        var saveProfilesDir = Path.Combine(installRoot, SaveProfilesRelativeDir);
+        var rocksDbV2Dir = Path.Combine(saveProfilesDir, RocksDbV2DirName);
+        var legacyRocksDbDir = Path.Combine(saveProfilesDir, LegacyRocksDbDirName);
+
+        if (Directory.Exists(rocksDbV2Dir)) return rocksDbV2Dir;
+        if (Directory.Exists(legacyRocksDbDir)) return legacyRocksDbDir;
+
+        if (!createIfMissing) return null;
+        return rocksDbV2Dir;
     }
 
     /// <summary>
