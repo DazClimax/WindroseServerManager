@@ -59,7 +59,7 @@ public partial class MainWindowViewModel : ViewModelBase
         Toasts = toasts;
         _settings = settings;
         _logger = logger;
-        _nav.Navigated += vm => CurrentPage = vm;
+        _nav.Navigated += OnNavigated;
 
         restartScheduler.RestartNotified += OnRestartNotified;
 
@@ -130,6 +130,33 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         var vm = (ViewModelBase)App.Services.GetService(item.VmType)!;
         _nav.NavigateTo(vm);
+    }
+
+    private void OnNavigated(ViewModelBase vm)
+    {
+        CurrentPage = vm;
+        SyncSelectionToPage(vm);
+    }
+
+    private void SyncSelectionToPage(ViewModelBase vm)
+    {
+        var mainItem = NavItems.FirstOrDefault(item => item.VmType.IsInstanceOfType(vm));
+        var footerItem = mainItem is null
+            ? FooterItems.FirstOrDefault(item => item.VmType.IsInstanceOfType(vm))
+            : null;
+
+        if (mainItem is null && footerItem is null) return;
+
+        _suppressSelectionSync = true;
+        try
+        {
+            SelectedMainItem = mainItem;
+            SelectedFooterItem = footerItem;
+        }
+        finally
+        {
+            _suppressSelectionSync = false;
+        }
     }
 
     partial void OnActiveServerChanged(ServerEntry? value)
