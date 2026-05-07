@@ -602,10 +602,14 @@ public sealed class WindrosePlusService : IWindrosePlusService
         // but not in pwsh 7 (System.Drawing.Common is a separate nuget there, not auto-loaded).
         // Running under pwsh 7 makes the live map silently stall at "Map not ready yet".
         var ps = "powershell";
+        var dashboardPort = _settings.Current.WindrosePlusDashboardPortByServer.GetValueOrDefault(serverDirFull, 0);
+        if (dashboardPort <= 0)
+            dashboardPort = _settings.Current.WindrosePlusDashboardPortByServer.GetValueOrDefault(serverInstallDir, 0);
+        var portArg = dashboardPort > 0 ? $" -Port {dashboardPort}" : "";
         var psi = new System.Diagnostics.ProcessStartInfo
         {
             FileName = ps,
-            Arguments = $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"{scriptPath}\" -GameDir \"{serverDirFull}\"",
+            Arguments = $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"{scriptPath}\" -GameDir \"{serverDirFull}\"{portArg}",
             WorkingDirectory = serverDirFull,
             UseShellExecute = false,
             CreateNoWindow = true,
@@ -613,7 +617,7 @@ public sealed class WindrosePlusService : IWindrosePlusService
             RedirectStandardError = false,
         };
 
-        _logger.LogInformation("Starting WindrosePlus dashboard server for {Dir}", serverDirFull);
+        _logger.LogInformation("Starting WindrosePlus dashboard server for {Dir} on port {Port}", serverDirFull, dashboardPort > 0 ? dashboardPort : null);
         var proc = new System.Diagnostics.Process { StartInfo = psi };
         proc.Start();
         _dashboardProcesses[serverDirFull] = proc;
