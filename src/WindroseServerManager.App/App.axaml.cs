@@ -234,6 +234,7 @@ public partial class App : Application
         s.AddSingleton<InstallationViewModel>();
         s.AddTransient<InstallWizardViewModel>();
         s.AddSingleton<ServerControlViewModel>();
+        s.AddSingleton<ServerLogViewModel>();
         s.AddSingleton<ConfigurationViewModel>();
         s.AddSingleton<BackupsViewModel>();
         s.AddSingleton<ModsViewModel>();

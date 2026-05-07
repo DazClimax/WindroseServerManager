@@ -23,7 +23,8 @@
     <!-- Navigation -->
     <sys:String x:Key="Nav.Dashboard">Dashboard</sys:String>
     <sys:String x:Key="Nav.Installation">Installation</sys:String>
-    <sys:String x:Key="Nav.ServerControl">Log &amp; Automatisierung</sys:String>
+    <sys:String x:Key="Nav.ServerControl">Automatisierung</sys:String>
+    <sys:String x:Key="Nav.Logs">Logs</sys:String>
     <sys:String x:Key="Nav.Configuration">Konfiguration</sys:String>
     <sys:String x:Key="Nav.Backups">Backups</sys:String>
     <sys:String x:Key="Nav.Settings">Einstellungen</sys:String>
@@ -193,8 +194,10 @@
     <sys:String x:Key="Configuration.WorldNameEmpty">Welt-Name darf nicht leer sein.</sys:String>
 
     <!-- Server Control / Log / Automation -->
-    <sys:String x:Key="ServerControl.Title">Log &amp; Automatisierung</sys:String>
-    <sys:String x:Key="ServerControl.Subtitle">Live-Log und geplante Restarts</sys:String>
+    <sys:String x:Key="ServerControl.Title">Automatisierung</sys:String>
+    <sys:String x:Key="ServerControl.Subtitle">Geplante Restarts und automatische Schwellenwerte</sys:String>
+    <sys:String x:Key="ServerLog.Title">Logs</sys:String>
+    <sys:String x:Key="ServerLog.Subtitle">Live-Log des Windrose-Servers</sys:String>
     <sys:String x:Key="ServerControl.ScheduledRestarts">Geplante Restarts</sys:String>
     <sys:String x:Key="ServerControl.Enabled">Aktiviert</sys:String>
     <sys:String x:Key="ServerControl.At">um</sys:String>
