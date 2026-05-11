@@ -32,4 +32,9 @@ public interface IServerProcessService
     /// Returns true if a process was found and attached, false otherwise.
     /// </summary>
     bool TryAttachToExistingProcess();
+
+    /// <summary>
+    /// Performs one watchdog pass and restarts via <see cref="StartAsync"/> when crash recovery is armed.
+    /// </summary>
+    Task<bool> RunWatchdogCheckAsync(CancellationToken ct = default);
 }

@@ -31,6 +31,7 @@ public partial class ServerControlViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private int _restartWarnMinutes = 5;
     [ObservableProperty] private bool _restartMon, _restartTue, _restartWed, _restartThu, _restartFri, _restartSat, _restartSun;
     [ObservableProperty] private bool _restartInstallUpdateBeforeStart;
+    [ObservableProperty] private bool _restartCreateBackupBeforeStart;
     [ObservableProperty] private bool _restartBroadcastEnabled;
     [ObservableProperty] private string _restartBroadcastMessage = string.Empty;
 
@@ -86,6 +87,7 @@ public partial class ServerControlViewModel : ViewModelBase, IDisposable
         DailyRestartTime = settings.Current.DailyRestartTime;
         RestartWarnMinutes = settings.Current.RestartWarnMinutes;
         RestartInstallUpdateBeforeStart = settings.Current.RestartInstallUpdateBeforeStart;
+        RestartCreateBackupBeforeStart = settings.Current.RestartCreateBackupBeforeStart;
         RestartBroadcastEnabled = settings.Current.RestartBroadcastEnabled;
         RestartBroadcastMessage = string.IsNullOrWhiteSpace(settings.Current.RestartBroadcastMessage)
             ? "Server restartet in {minutes} Minuten. Grund: {reason}"
@@ -297,6 +299,7 @@ public partial class ServerControlViewModel : ViewModelBase, IDisposable
             s.DailyRestartTime = DailyRestartTime;
             s.RestartWarnMinutes = Math.Max(0, RestartWarnMinutes);
             s.RestartInstallUpdateBeforeStart = RestartInstallUpdateBeforeStart;
+            s.RestartCreateBackupBeforeStart = RestartCreateBackupBeforeStart;
             s.RestartBroadcastEnabled = RestartBroadcastEnabled;
             s.RestartBroadcastMessage = string.IsNullOrWhiteSpace(RestartBroadcastMessage)
                 ? "Server restartet in {minutes} Minuten. Grund: {reason}"

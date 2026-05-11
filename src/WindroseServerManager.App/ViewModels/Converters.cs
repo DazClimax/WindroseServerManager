@@ -137,6 +137,15 @@ public sealed class BoolToAutomaticBrushConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
+public sealed class BackupTypeLabelConverter : IValueConverter
+{
+    public static readonly BackupTypeLabelConverter Instance = new();
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => value is bool b && b ? Loc.Get("Backups.Col.Automatic") : Loc.Get("Backups.Col.Manual");
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
 public sealed class BoolToEnabledBrushConverter : IValueConverter
 {
     public static readonly BoolToEnabledBrushConverter Instance = new();

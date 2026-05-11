@@ -3,6 +3,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using Avalonia.Input.Platform;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Serilog;
@@ -26,7 +27,7 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     private readonly IWindrosePlusService _wplus;
     private readonly IWindrosePlusApiService _wplusApi;
     private readonly IHttpClientFactory _httpFactory;
-    private readonly System.Timers.Timer _timer;
+    private readonly DispatcherTimer _timer;
 
     [ObservableProperty] private ServerInstallInfo? _installInfo;
     [ObservableProperty] private ServerStatus _status;
@@ -57,6 +58,7 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
 
     private bool _healthBannerDismissedForSession;
     private bool _lastHealthCheckFailed;
+    private bool _refreshInProgress;
     private DateTime _healthCheckCooldownUntilUtc = DateTime.MinValue;
     private DateTime _healthCheckStartDelayUntilUtc = DateTime.MinValue;
     private ServerStatus _lastObservedStatus = ServerStatus.Stopped;
@@ -182,8 +184,11 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
 
         localization.LanguageChanged += RaiseLocalizedDisplayBindings;
 
-        _timer = new System.Timers.Timer(2000);
-        _timer.Elapsed += async (_, _) => await RefreshAsync();
+        _timer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(2),
+        };
+        _timer.Tick += async (_, _) => await RefreshAsync();
         _timer.Start();
 
         _ = RefreshAsync();
@@ -264,6 +269,8 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     [RelayCommand]
     private async Task RefreshAsync(CancellationToken ct = default)
     {
+        if (_refreshInProgress) return;
+        _refreshInProgress = true;
         var serverDir = _settings.ActiveServerDir;
         try
         {
@@ -422,6 +429,10 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
         catch (Exception ex)
         {
             Log.Debug(ex, "Dashboard refresh error (non-critical)");
+        }
+        finally
+        {
+            _refreshInProgress = false;
         }
     }
 
@@ -615,7 +626,6 @@ public partial class DashboardViewModel : ViewModelBase, IDisposable
     public void Dispose()
     {
         _timer.Stop();
-        _timer.Dispose();
         _proc.StatusChanged -= OnServerStatusChanged;
         if (RetrofitBanner is not null)
             RetrofitBanner.StateChanged -= OnRetrofitStateChanged;

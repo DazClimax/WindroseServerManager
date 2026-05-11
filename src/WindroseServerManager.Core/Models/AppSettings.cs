@@ -4,6 +4,8 @@ public sealed class AppSettings
 {
     /// <summary>UI-Sprache: "auto" (Windows-Sprache) | "de" | "en".</summary>
     public string Language { get; set; } = "auto";
+    /// <summary>UI-Skin: "classic" | "stitch".</summary>
+    public string Skin { get; set; } = "classic";
 
     // Multi-server list (v1.2+)
     public List<ServerEntry> Servers { get; set; } = new();
@@ -40,6 +42,8 @@ public sealed class AppSettings
     public int RestartWarnMinutes { get; set; } = 5;
     /// <summary>Runs SteamCMD update while the server is stopped before automated restarts start it again.</summary>
     public bool RestartInstallUpdateBeforeStart { get; set; } = false;
+    /// <summary>Creates an automatic saves backup while the server is stopped before automated restarts start it again.</summary>
+    public bool RestartCreateBackupBeforeStart { get; set; } = false;
     /// <summary>Sends a WindrosePlus RCON broadcast before automated restarts. Requires WindrosePlus.</summary>
     public bool RestartBroadcastEnabled { get; set; } = false;
     public string RestartBroadcastMessage { get; set; } = "Server restartet in {minutes} Minuten. Grund: {reason}";
@@ -69,6 +73,8 @@ public sealed class AppSettings
     // WindrosePlus (v1.2)
     /// <summary>Per-server opt-in for WindrosePlus. Key = server InstallDir (full path, normalized). Default: missing = opted out.</summary>
     public Dictionary<string, bool> WindrosePlusActiveByServer { get; set; } = new();
+    /// <summary>Per-server desired runtime state for watchdog recovery. Start=true, manual Stop/Kill=false.</summary>
+    public Dictionary<string, bool> DesiredServerRunningByServer { get; set; } = new();
     /// <summary>Per-server WindrosePlus version tag most recently installed. Key = server InstallDir (full path, normalized).</summary>
     public Dictionary<string, string> WindrosePlusVersionByServer { get; set; } = new();
 

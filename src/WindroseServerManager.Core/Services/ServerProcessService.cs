@@ -22,6 +22,7 @@ public sealed class ServerProcessService : IServerProcessService, IAsyncDisposab
     private CancellationTokenSource? _monitorCts;
     private CancellationTokenSource? _logTailCts;
     private string _startedServerDir = string.Empty;
+    private int _autoRestartQueued;
 
     public ServerProcessService(
         ILogger<ServerProcessService> logger,
@@ -203,6 +204,7 @@ public sealed class ServerProcessService : IServerProcessService, IAsyncDisposab
 
             _logger.LogInformation("Started Windrose server pid={Pid} exe={Exe}", ProcessId, exe);
 
+            MarkDesiredRunning(dir, true);
             _ = _events.AppendAsync(new ServerEvent(DateTime.UtcNow, ServerEventType.Started, $"Start via App (pid={ProcessId})"));
 
             // Start WindrosePlus dashboard server after game server starts (fire-and-forget, 2s delay)
@@ -232,6 +234,7 @@ public sealed class ServerProcessService : IServerProcessService, IAsyncDisposab
             if (Status is ServerStatus.Stopped or ServerStatus.Stopping) return;
             if (_process is null) return;
             p = _process;
+            MarkDesiredRunning(_startedServerDir, false);
             graceSeconds = Math.Max(5, _settings.Current.GracefulShutdownSeconds);
             TransitionTo(ServerStatus.Stopping);
         }
@@ -291,6 +294,7 @@ public sealed class ServerProcessService : IServerProcessService, IAsyncDisposab
         {
             if (_process is null || Status == ServerStatus.Stopped) return;
             p = _process;
+            MarkDesiredRunning(_startedServerDir, false);
             TransitionTo(ServerStatus.Stopping);
         }
 
@@ -372,6 +376,50 @@ public sealed class ServerProcessService : IServerProcessService, IAsyncDisposab
         return false;
     }
 
+    public Task<bool> RunWatchdogCheckAsync(CancellationToken ct = default)
+    {
+        if (!_settings.Current.AutoRestartOnCrash) return Task.FromResult(false);
+
+        ServerStatus status;
+        Process? process;
+        bool processGone = false;
+        lock (_lock)
+        {
+            status = Status;
+            process = _process;
+
+            if (Status is ServerStatus.Running or ServerStatus.Starting)
+            {
+                if (process is null)
+                {
+                    processGone = true;
+                }
+                else
+                {
+                    try { processGone = process.HasExited; }
+                    catch { processGone = true; }
+                }
+
+                if (processGone)
+                {
+                    LastExitCode = null;
+                    CleanupProcess();
+                    _windrosePlus.StopDashboard(_startedServerDir);
+                    TransitionTo(ServerStatus.Crashed);
+                    status = ServerStatus.Crashed;
+                }
+            }
+        }
+
+        if (processGone)
+            AppendSystem("Watchdog: Server-Prozess ist verschwunden.");
+
+        if (status == ServerStatus.Crashed)
+            return Task.FromResult(QueueAutoRestart("Watchdog: Crash erkannt"));
+
+        return Task.FromResult(false);
+    }
+
     private void KillOrphanServerProcesses()
     {
         var installDir = _settings.ActiveServerDir;
@@ -447,24 +495,39 @@ public sealed class ServerProcessService : IServerProcessService, IAsyncDisposab
             : $"Stop (ExitCode={code?.ToString() ?? "?"})";
         _ = _events.AppendAsync(new ServerEvent(DateTime.UtcNow, evtType, reason, code, sessionDuration));
 
-        // Auto-restart on crash if enabled and we weren't the one who stopped it
+        // Auto-restart on crash if enabled and we weren't the one who stopped it.
+        // This uses the same StartAsync path as the manual Start button, including Windrose+ pre-launch and dashboard.
         if (previous != ServerStatus.Stopping && _settings.Current.AutoRestartOnCrash)
         {
-            AppendSystem("Auto-Restart aktiv, starte in 5s neu...");
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await Task.Delay(5000).ConfigureAwait(false);
-                    await StartAsync().ConfigureAwait(false);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Auto-restart failed");
-                    AppendSystem($"[FEHLER] Auto-Restart fehlgeschlagen: {ex.Message}");
-                }
-            });
+            QueueAutoRestart("Watchdog: Prozess beendet");
         }
+    }
+
+    private bool QueueAutoRestart(string reason)
+    {
+        if (Interlocked.CompareExchange(ref _autoRestartQueued, 1, 0) != 0)
+            return false;
+
+        AppendSystem($"{reason}, starte in 5s neu...");
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(5000).ConfigureAwait(false);
+                await StartAsync().ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Watchdog restart failed");
+                AppendSystem($"[FEHLER] Watchdog-Neustart fehlgeschlagen: {ex.Message}");
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _autoRestartQueued, 0);
+            }
+        });
+
+        return true;
     }
 
     private void CleanupProcess()
@@ -632,6 +695,14 @@ public sealed class ServerProcessService : IServerProcessService, IAsyncDisposab
             LastUpdatedUtc: null,
             WindrosePlusActive: active,
             WindrosePlusVersionTag: tag);
+    }
+
+    private void MarkDesiredRunning(string? serverDir, bool desired)
+    {
+        if (string.IsNullOrWhiteSpace(serverDir)) return;
+
+        var key = Path.GetFullPath(serverDir).TrimEnd('\\', '/');
+        _ = _settings.UpdateAsync(s => s.DesiredServerRunningByServer[key] = desired);
     }
 
     private async Task HealServerDescriptionIfNeededAsync(string installDir, CancellationToken ct)

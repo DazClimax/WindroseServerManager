@@ -23,6 +23,12 @@ public sealed class UpdateIntervalOption
     public required string DisplayName { get; init; }
 }
 
+public sealed class SkinOption
+{
+    public required string Key { get; init; }
+    public required string DisplayName { get; init; }
+}
+
 public partial class SettingsViewModel : ViewModelBase
 {
     private readonly IAppSettingsService _settings;
@@ -31,6 +37,7 @@ public partial class SettingsViewModel : ViewModelBase
     private readonly IAutoStartService _autoStart;
     private readonly IAppUpdateService _appUpdate;
     private readonly ILocalizationService _localization;
+    private readonly IAppSkinService _skins;
     private readonly IWindrosePlusService _wplus;
     private readonly IWindrosePlusApiService _wplusApi;
     private readonly IWindrosePlusUpdateService _wplusUpdate;
@@ -82,6 +89,10 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty] private LanguageOption? _selectedLanguageOption;
     private bool _suppressLanguageWrite;
 
+    public ObservableCollection<SkinOption> SkinOptions { get; } = new();
+    [ObservableProperty] private SkinOption? _selectedSkinOption;
+    private bool _suppressSkinWrite;
+
     private bool _suppressAutoStartWrite;
 
     public SettingsViewModel(
@@ -91,6 +102,7 @@ public partial class SettingsViewModel : ViewModelBase
         IAutoStartService autoStart,
         IAppUpdateService appUpdate,
         ILocalizationService localization,
+        IAppSkinService skins,
         IWindrosePlusService wplus,
         IWindrosePlusApiService wplusApi,
         IWindrosePlusUpdateService wplusUpdate)
@@ -101,6 +113,7 @@ public partial class SettingsViewModel : ViewModelBase
         _autoStart = autoStart;
         _appUpdate = appUpdate;
         _localization = localization;
+        _skins = skins;
         _wplus = wplus;
         _wplusApi = wplusApi;
         _wplusUpdate = wplusUpdate;
@@ -124,6 +137,7 @@ public partial class SettingsViewModel : ViewModelBase
 
         RebuildLanguageOptions();
         _localization.LanguageChanged += OnLanguageChanged;
+        RebuildSkinOptions();
 
         RebuildIntervalOptions();
         _wplusUpdate.UpdateChecked += OnWindrosePlusUpdateChecked;
@@ -244,6 +258,33 @@ public partial class SettingsViewModel : ViewModelBase
         _ = _settings.UpdateAsync(s => s.Language = value.Key);
     }
 
+    private void RebuildSkinOptions()
+    {
+        _suppressSkinWrite = true;
+        try
+        {
+            SkinOptions.Clear();
+            foreach (var skin in _skins.Skins)
+                SkinOptions.Add(new SkinOption { Key = skin.Key, DisplayName = skin.DisplayName });
+
+            SelectedSkinOption = SkinOptions.FirstOrDefault(o => o.Key == _skins.CurrentSkin)
+                                 ?? SkinOptions.FirstOrDefault();
+        }
+        finally
+        {
+            _suppressSkinWrite = false;
+        }
+    }
+
+    partial void OnSelectedSkinOptionChanged(SkinOption? value)
+    {
+        if (_suppressSkinWrite || value is null) return;
+        if (string.Equals(value.Key, _skins.CurrentSkin, StringComparison.OrdinalIgnoreCase)) return;
+
+        _skins.SetSkin(value.Key);
+        _ = _settings.UpdateAsync(s => s.Skin = value.Key);
+    }
+
     [RelayCommand]
     private Task CheckFirewallAsync() => CheckFirewallCoreAsync(showToast: true);
 
@@ -318,6 +359,12 @@ public partial class SettingsViewModel : ViewModelBase
 
     private void OnSettingsChanged(WindroseServerManager.Core.Models.AppSettings settings)
     {
+        if (!string.Equals(settings.Skin, _skins.CurrentSkin, StringComparison.OrdinalIgnoreCase))
+        {
+            _skins.SetSkin(settings.Skin);
+            RebuildSkinOptions();
+        }
+
         _ = CheckFirewallCoreAsync(showToast: false);
     }
 

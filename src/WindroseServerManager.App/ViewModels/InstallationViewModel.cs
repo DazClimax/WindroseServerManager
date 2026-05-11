@@ -515,7 +515,7 @@ public partial class InstallationViewModel : ViewModelBase, IWindrosePlusOptInCo
             _toasts.Info(Loc.Format("Server.WindrosePlus.Update.Starting", entry.Name));
             await _wplus.InstallAsync(entry.InstallDir, null, CancellationToken.None);
             _toasts.Success(Loc.Format("Server.WindrosePlus.Update.Done", entry.Name));
-            await _wplusUpdate.CheckAsync();
+            await RefreshWindrosePlusUpdateStateAsync();
         }
         catch (WindrosePlusOfflineException)
         {
@@ -572,9 +572,21 @@ public partial class InstallationViewModel : ViewModelBase, IWindrosePlusOptInCo
             }
         }
 
-        await _wplusUpdate.CheckAsync();
+        await RefreshWindrosePlusUpdateStateAsync();
         _toasts.Info(Loc.Format("Server.WindrosePlus.Update.BatchSummary", ok, failed, skipped));
         RefreshServerCards();
+    }
+
+    private async Task RefreshWindrosePlusUpdateStateAsync()
+    {
+        try
+        {
+            await _wplusUpdate.CheckAsync();
+        }
+        catch (Exception)
+        {
+            _toasts.Warning(Loc.Get("Server.WindrosePlus.Update.RefreshFailed"));
+        }
     }
 
     [RelayCommand]

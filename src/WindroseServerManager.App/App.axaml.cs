@@ -36,6 +36,9 @@ public partial class App : Application
         var localization = Services.GetRequiredService<ILocalizationService>();
         localization.Initialize(settings.Current.Language);
 
+        var skins = Services.GetRequiredService<IAppSkinService>();
+        skins.Initialize(settings.Current);
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var main = Services.GetRequiredService<MainWindowViewModel>();
@@ -83,7 +86,7 @@ public partial class App : Application
             var global = settings.Current.AutoStartServerOnAppLaunch;
             var activeId = settings.Current.ActiveServerId;
             var eligible = settings.Current.Servers
-                .Where(s => global || s.AutoStartOnAppLaunch)
+                .Where(s => global || s.AutoStartOnAppLaunch || IsDesiredRunning(settings.Current, s.InstallDir))
                 .ToList();
 
             if (eligible.Count == 0)
@@ -112,11 +115,26 @@ public partial class App : Application
         }
     }
 
+    private static bool IsDesiredRunning(AppSettings settings, string installDir)
+    {
+        if (string.IsNullOrWhiteSpace(installDir)) return false;
+        var key = System.IO.Path.GetFullPath(installDir).TrimEnd('\\', '/');
+        return settings.DesiredServerRunningByServer.GetValueOrDefault(key, false)
+            || settings.DesiredServerRunningByServer.GetValueOrDefault(key + "\\", false)
+            || settings.DesiredServerRunningByServer.GetValueOrDefault(installDir, false);
+    }
+
     private static async Task TryStartActiveServerAsync(Core.Models.ServerEntry entry)
     {
         try
         {
             var server = Services.GetRequiredService<IServerProcessService>();
+            if (server.TryAttachToExistingProcess())
+            {
+                Log.Information("Auto-start: attached to already-running active server '{Name}'", entry.Name);
+                return;
+            }
+
             if (server.Status is ServerStatus.Running or ServerStatus.Starting)
             {
                 Log.Information("Auto-start: active server '{Name}' already running — skip", entry.Name);
@@ -207,11 +225,13 @@ public partial class App : Application
 
         s.AddSingleton<IAppSettingsService, AppSettingsService>();
         s.AddSingleton<ILocalizationService, LocalizationService>();
+        s.AddSingleton<IAppSkinService, AppSkinService>();
         s.AddSingleton<ISteamCmdService, SteamCmdService>();
         s.AddSingleton<IWindrosePlusService, WindrosePlusService>();
         s.AddSingleton<IWindrosePlusApiService, WindrosePlusApiService>();
         s.AddSingleton<IServerInstallService, ServerInstallService>();
         s.AddSingleton<IServerProcessService, ServerProcessService>();
+        s.AddHostedService<ServerWatchdogService>();
         s.AddSingleton<IServerConfigService, ServerConfigService>();
         s.AddSingleton<IBackupService, BackupService>();
         s.AddSingleton<IModService, ModService>();

@@ -89,7 +89,8 @@ public partial class BackupsViewModel : ViewModelBase
         Backups.Clear();
         try
         {
-            foreach (var b in _backup.ListBackups()) Backups.Add(b);
+            foreach (var b in _backup.ListBackups().OrderByDescending(b => b.CreatedUtc))
+                Backups.Add(b);
         }
         catch (Exception ex) { var msg = ErrorMessageHelper.FriendlyMessage(ex); ErrorMessage = msg; _toasts.Error(msg); }
     }

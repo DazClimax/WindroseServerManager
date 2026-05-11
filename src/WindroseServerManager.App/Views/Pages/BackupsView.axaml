@@ -113,11 +113,10 @@
                                                        Text="{Binding CreatedUtc, Converter={x:Static vm:TimestampToDateTimeLocalConverter.Instance}}" />
                                         </StackPanel>
 
-                                        <!-- Auto Badge -->
+                                        <!-- Backup Type -->
                                         <Border Grid.Column="2" Classes="badge"
-                                                Margin="12,0"
-                                                IsVisible="{Binding IsAutomatic}">
-                                            <TextBlock Text="{DynamicResource Backups.Col.Automatic}" />
+                                                Margin="12,0">
+                                            <TextBlock Text="{Binding IsAutomatic, Converter={x:Static vm:BackupTypeLabelConverter.Instance}}" />
                                         </Border>
 
                                         <!-- Size -->

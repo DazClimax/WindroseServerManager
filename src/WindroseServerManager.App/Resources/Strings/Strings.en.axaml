@@ -205,6 +205,7 @@
     <sys:String x:Key="ServerControl.MinBefore">min before</sys:String>
     <sys:String x:Key="ServerControl.Weekdays">Weekdays (all selected = daily)</sys:String>
     <sys:String x:Key="ServerControl.UpdateBeforeRestart">Install server update before automated restart</sys:String>
+    <sys:String x:Key="ServerControl.BackupBeforeRestart">Create backup after server stop</sys:String>
     <sys:String x:Key="ServerControl.BroadcastBeforeRestart">Send message to all players</sys:String>
     <sys:String x:Key="ServerControl.BroadcastMessage.Placeholder">Server restarts in {minutes} minutes. Reason: {reason}</sys:String>
     <sys:String x:Key="ServerControl.BroadcastMessage.Hint">Requires WindrosePlus/RCON. Placeholders: {minutes}, {reason}</sys:String>
@@ -255,6 +256,7 @@
     <sys:String x:Key="Backups.Col.Created">Created</sys:String>
     <sys:String x:Key="Backups.Col.SizeMb">Size (MB)</sys:String>
     <sys:String x:Key="Backups.Col.Automatic">Automatic</sys:String>
+    <sys:String x:Key="Backups.Col.Manual">Manual</sys:String>
     <sys:String x:Key="Backups.None.Title">No backups yet</sys:String>
     <sys:String x:Key="Backups.None">Click 'Create backup now' to create your first backup.</sys:String>
 
@@ -275,12 +277,14 @@
     <sys:String x:Key="Settings.Language.Auto">Automatic</sys:String>
     <sys:String x:Key="Settings.Language.German">Deutsch</sys:String>
     <sys:String x:Key="Settings.Language.English">English</sys:String>
+    <sys:String x:Key="Settings.Skin.Title">Skin</sys:String>
+    <sys:String x:Key="Settings.Skin.Hint">Changes the app colors and accents immediately.</sys:String>
     <sys:String x:Key="Settings.LaunchArgs.Title">Server start (launch args)</sys:String>
     <sys:String x:Key="Settings.LaunchArgs.ConsoleLog">Open external console log window (-log)</sys:String>
     <sys:String x:Key="Settings.LaunchArgs.Extra">Additional launch args (optional)</sys:String>
     <sys:String x:Key="Settings.LaunchArgs.Extra.Placeholder">e.g. -NOSEAMLESSTRAVEL</sys:String>
     <sys:String x:Key="Settings.LaunchArgs.Hint">Windrose uses automatic NAT punch-through. Fixed ports are not supported — this field is for future undocked args.</sys:String>
-    <sys:String x:Key="Settings.LaunchArgs.AutoRestartOnCrash">Auto-restart on crash</sys:String>
+    <sys:String x:Key="Settings.LaunchArgs.AutoRestartOnCrash">Watchdog: auto-restart server after crash</sys:String>
     <sys:String x:Key="Settings.LaunchArgs.GracefulShutdown">Graceful shutdown (seconds)</sys:String>
     <sys:String x:Key="Settings.Steam.Title">Steam &amp; SteamCMD</sys:String>
     <sys:String x:Key="Settings.Steam.AppId">Steam App ID</sys:String>
@@ -740,6 +744,7 @@
     <sys:String x:Key="Server.WindrosePlus.Update.StopFirst">Please stop the server before updating Windrose+.</sys:String>
     <sys:String x:Key="Server.WindrosePlus.Update.SkippedRunning">{0}: skipped (still running).</sys:String>
     <sys:String x:Key="Server.WindrosePlus.Update.BatchSummary">Update finished: {0} ok, {1} failed, {2} skipped.</sys:String>
+    <sys:String x:Key="Server.WindrosePlus.Update.RefreshFailed">Windrose+ was installed, but the follow-up update check could not be refreshed.</sys:String>
 
     <sys:String x:Key="Settings.WindrosePlus.Update.Title">Windrose+ updates</sys:String>
     <sys:String x:Key="Settings.WindrosePlus.Update.Hint">Compares the installed Windrose+ version of every server with the latest GitHub release. Nothing is installed automatically.</sys:String>

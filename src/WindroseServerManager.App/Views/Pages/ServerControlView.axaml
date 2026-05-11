@@ -40,6 +40,8 @@
                 <StackPanel Spacing="10">
                     <CheckBox Content="{DynamicResource ServerControl.UpdateBeforeRestart}"
                               IsChecked="{Binding RestartInstallUpdateBeforeStart}" />
+                    <CheckBox Content="{DynamicResource ServerControl.BackupBeforeRestart}"
+                              IsChecked="{Binding RestartCreateBackupBeforeStart}" />
                     <CheckBox Content="{DynamicResource ServerControl.BroadcastBeforeRestart}"
                               IsChecked="{Binding RestartBroadcastEnabled}" />
                     <TextBox Text="{Binding RestartBroadcastMessage}"

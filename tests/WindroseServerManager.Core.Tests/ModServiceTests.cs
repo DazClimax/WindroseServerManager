@@ -299,5 +299,6 @@ public class ModServiceTests : IDisposable
         public Task KillAsync(CancellationToken ct = default) => Task.CompletedTask;
         public string? ValidateCanStart() => null;
         public bool TryAttachToExistingProcess() => false;
+        public Task<bool> RunWatchdogCheckAsync(CancellationToken ct = default) => Task.FromResult(false);
     }
 }

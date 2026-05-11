@@ -13,6 +13,23 @@
                     <StackPanel Margin="0,16,0,0" Spacing="12">
                         <Border Classes="card">
                             <StackPanel Spacing="10">
+                                <TextBlock Classes="section-header" Text="{DynamicResource Settings.Skin.Title}" />
+                                <ComboBox ItemsSource="{Binding SkinOptions}"
+                                          SelectedItem="{Binding SelectedSkinOption}"
+                                          HorizontalAlignment="Left" MinWidth="240">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding DisplayName}" />
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                                <TextBlock Classes="caption" TextWrapping="Wrap"
+                                           Text="{DynamicResource Settings.Skin.Hint}" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Classes="card">
+                            <StackPanel Spacing="10">
                                 <TextBlock Classes="section-header" Text="{DynamicResource Settings.Language.Title}" />
                                 <ComboBox ItemsSource="{Binding LanguageOptions}"
                                           SelectedItem="{Binding SelectedLanguageOption}"

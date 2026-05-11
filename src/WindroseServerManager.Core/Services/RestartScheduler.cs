@@ -25,6 +25,7 @@ public sealed class RestartScheduler : BackgroundService
     private readonly IMetricsService _metrics;
     private readonly IServerEventLog _events;
     private readonly IServerInstallService _installer;
+    private readonly IBackupService _backups;
     private readonly IWindrosePlusApiService _windrosePlusApi;
 
     private DateTime _lastTriggerDate = DateTime.MinValue;
@@ -40,6 +41,7 @@ public sealed class RestartScheduler : BackgroundService
         IMetricsService metrics,
         IServerEventLog events,
         IServerInstallService installer,
+        IBackupService backups,
         IWindrosePlusApiService windrosePlusApi)
     {
         _logger = logger;
@@ -48,6 +50,7 @@ public sealed class RestartScheduler : BackgroundService
         _metrics = metrics;
         _events = events;
         _installer = installer;
+        _backups = backups;
         _windrosePlusApi = windrosePlusApi;
     }
 
@@ -197,11 +200,23 @@ public sealed class RestartScheduler : BackgroundService
         try { await _server.StopAsync(ct).ConfigureAwait(false); }
         catch (Exception ex) { _logger.LogError(ex, "Scheduled restart: stop failed"); }
 
-        try { await Task.Delay(TimeSpan.FromSeconds(10), ct).ConfigureAwait(false); }
-        catch (OperationCanceledException) { return; }
+        var serverServiceStopped = await WaitForServerServiceStoppedAsync(TimeSpan.FromSeconds(10), ct).ConfigureAwait(false);
+
+        if (_settings.Current.RestartCreateBackupBeforeStart)
+        {
+            if (serverServiceStopped)
+                await CreateBackupBeforeRestartAsync(ct).ConfigureAwait(false);
+            else
+                await AppendMaintenanceSkippedAsync("Backup vor Restart übersprungen: Server-Prozess läuft noch oder stoppt noch.", ct).ConfigureAwait(false);
+        }
 
         if (_settings.Current.RestartInstallUpdateBeforeStart)
-            await InstallUpdateBeforeRestartAsync(ct).ConfigureAwait(false);
+        {
+            if (serverServiceStopped)
+                await InstallUpdateBeforeRestartAsync(ct).ConfigureAwait(false);
+            else
+                await AppendMaintenanceSkippedAsync("Server-Update vor Restart übersprungen: Server-Prozess läuft noch oder stoppt noch.", ct).ConfigureAwait(false);
+        }
 
         try
         {
@@ -211,6 +226,59 @@ public sealed class RestartScheduler : BackgroundService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Scheduled restart: start failed");
+        }
+    }
+
+    private async Task<bool> WaitForServerServiceStoppedAsync(TimeSpan timeout, CancellationToken ct)
+    {
+        var deadline = DateTime.UtcNow + timeout;
+        while (DateTime.UtcNow < deadline)
+        {
+            if (IsServerServiceStopped())
+                return true;
+
+            await Task.Delay(TimeSpan.FromMilliseconds(500), ct).ConfigureAwait(false);
+        }
+
+        return IsServerServiceStopped();
+    }
+
+    private bool IsServerServiceStopped() => _server.Status is ServerStatus.Stopped or ServerStatus.Crashed;
+
+    private Task AppendMaintenanceSkippedAsync(string message, CancellationToken ct)
+    {
+        _logger.LogWarning("{Message} Status={Status}", message, _server.Status);
+        return _events.AppendAsync(new ServerEvent(DateTime.UtcNow, ServerEventType.ScheduledRestart, message), ct);
+    }
+
+    private async Task CreateBackupBeforeRestartAsync(CancellationToken ct)
+    {
+        _logger.LogInformation("Creating backup before automated restart");
+        await _events.AppendAsync(new ServerEvent(DateTime.UtcNow, ServerEventType.ScheduledRestart, "Backup vor Restart wird erstellt."), ct)
+            .ConfigureAwait(false);
+
+        try
+        {
+            var backup = await _backups.CreateBackupAsync(isAutomatic: true, ct).ConfigureAwait(false);
+            if (backup is null)
+            {
+                await _events.AppendAsync(new ServerEvent(DateTime.UtcNow, ServerEventType.ScheduledRestart, "Backup vor Restart übersprungen: Save-Verzeichnis nicht gefunden."), ct)
+                    .ConfigureAwait(false);
+                return;
+            }
+
+            var deleted = _backups.ApplyRetention();
+            var detail = deleted > 0
+                ? $"Backup vor Restart erstellt: {backup.FileName}. Retention hat {deleted} alte Backups gelöscht."
+                : $"Backup vor Restart erstellt: {backup.FileName}.";
+            await _events.AppendAsync(new ServerEvent(DateTime.UtcNow, ServerEventType.ScheduledRestart, detail), ct)
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Automated restart backup failed; starting server anyway");
+            await _events.AppendAsync(new ServerEvent(DateTime.UtcNow, ServerEventType.ScheduledRestart, $"Backup vor Restart fehlgeschlagen: {ex.Message}"), ct)
+                .ConfigureAwait(false);
         }
     }
 

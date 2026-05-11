@@ -7,8 +7,13 @@ namespace WindroseServerManager.Core.Tests.TestDoubles;
 internal sealed class NullAppSettingsService : IAppSettingsService
 {
     public static readonly NullAppSettingsService Instance = new();
+    private AppSettings _current = new();
 
-    public AppSettings Current { get; } = new();
+    public AppSettings Current
+    {
+        get => _current;
+        set => _current = value;
+    }
     public string ActiveServerDir => string.Empty;
 
     public event Action<AppSettings>? Changed { add { } remove { } }

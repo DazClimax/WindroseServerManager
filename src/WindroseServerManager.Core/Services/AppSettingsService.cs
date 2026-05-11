@@ -175,6 +175,7 @@ public sealed class AppSettingsService : IAppSettingsService
             s.ServerInstallDir = Norm(s.ServerInstallDir);
 
         NormalizeDictKeys(s.WindrosePlusActiveByServer);
+        NormalizeDictKeys(s.DesiredServerRunningByServer);
         NormalizeDictKeys(s.WindrosePlusOptInStateByServer);
         NormalizeDictKeys(s.WindrosePlusRconPasswordByServer);
         NormalizeDictKeys(s.WindrosePlusDashboardPortByServer);
