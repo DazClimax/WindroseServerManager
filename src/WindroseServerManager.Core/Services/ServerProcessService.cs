@@ -501,6 +501,11 @@ public sealed class ServerProcessService : IServerProcessService, IAsyncDisposab
         {
             QueueAutoRestart("Watchdog: Prozess beendet");
         }
+        else if (crashed && !_settings.Current.AutoRestartOnCrash)
+        {
+            AppendSystem("[Info] Watchdog-Neustart übersprungen: automatischer Neustart bei Crash ist deaktiviert.");
+            _logger.LogWarning("Server crashed with exit code {Code}, but AutoRestartOnCrash is disabled", code);
+        }
     }
 
     private bool QueueAutoRestart(string reason)
