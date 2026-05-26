@@ -82,6 +82,12 @@ public partial class App : Application
         {
             // Grace period so the main window is mounted before launching.
             await Task.Delay(TimeSpan.FromMilliseconds(500));
+            var startDelay = Math.Clamp(settings.Current.AutoStartDelaySeconds, 0, 60);
+            if (startDelay > 0)
+            {
+                Log.Information("Auto-start: waiting {Seconds}s before launching eligible servers", startDelay);
+                await Task.Delay(TimeSpan.FromSeconds(startDelay));
+            }
 
             var global = settings.Current.AutoStartServerOnAppLaunch;
             var activeId = settings.Current.ActiveServerId;

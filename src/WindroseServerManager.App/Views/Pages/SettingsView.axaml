@@ -105,11 +105,19 @@
 
                                 <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
                                     <StackPanel Grid.Column="0" Spacing="4">
+                                        <TextBlock Classes="caption" Text="{DynamicResource Settings.LaunchArgs.AutoStartDelay}" />
+                                        <NumericUpDown Value="{Binding AutoStartDelaySeconds}"
+                                                       Minimum="0" Maximum="60" FormatString="0" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Spacing="4">
                                         <TextBlock Classes="caption" Text="{DynamicResource Settings.LaunchArgs.GracefulShutdown}" />
                                         <NumericUpDown Value="{Binding GracefulShutdownSeconds}"
                                                        Minimum="5" Maximum="600" FormatString="0" />
                                     </StackPanel>
-                                    <StackPanel Grid.Column="1" Spacing="4">
+                                </Grid>
+
+                                <Grid ColumnDefinitions="*" ColumnSpacing="16">
+                                    <StackPanel Grid.Column="0" Spacing="4">
                                         <TextBlock Classes="caption" Text="{DynamicResource Settings.LaunchArgs.Extra}" />
                                         <TextBox Text="{Binding ExtraLaunchArgs}"
                                                  PlaceholderText="{DynamicResource Settings.LaunchArgs.Extra.Placeholder}" />

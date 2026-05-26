@@ -10,11 +10,14 @@ public sealed class ServerWatchdogService(
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        var initialDelay = TimeSpan.FromSeconds(10 + Math.Clamp(settings.Current.AutoStartDelaySeconds, 0, 60));
+
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
-                await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken).ConfigureAwait(false);
+                await Task.Delay(initialDelay, stoppingToken).ConfigureAwait(false);
+                initialDelay = TimeSpan.FromSeconds(10);
 
                 if (!settings.Current.AutoRestartOnCrash)
                     continue;

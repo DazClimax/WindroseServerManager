@@ -15,6 +15,7 @@ public class AppSettingsTests
         Assert.Equal("4129620", s.SteamAppId);
         Assert.Equal("auto", s.Language);
         Assert.False(s.AutoRestartOnCrash);
+        Assert.Equal(0, s.AutoStartDelaySeconds);
         Assert.False(s.AutoBackupEnabled);
         Assert.Equal(20, s.MaxBackupsToKeep);
         Assert.Equal("04:00", s.DailyRestartTime);
@@ -26,9 +27,11 @@ public class AppSettingsTests
         var s = new AppSettings();
         s.WindrosePlusActiveByServer["C:\\servers\\s1"] = true;
         s.WindrosePlusVersionByServer["C:\\servers\\s1"] = "v1.0.6";
+        s.AutoStartDelaySeconds = 30;
         var json = System.Text.Json.JsonSerializer.Serialize(s);
         var restored = System.Text.Json.JsonSerializer.Deserialize<AppSettings>(json)!;
         Assert.True(restored.WindrosePlusActiveByServer["C:\\servers\\s1"]);
         Assert.Equal("v1.0.6", restored.WindrosePlusVersionByServer["C:\\servers\\s1"]);
+        Assert.Equal(30, restored.AutoStartDelaySeconds);
     }
 }

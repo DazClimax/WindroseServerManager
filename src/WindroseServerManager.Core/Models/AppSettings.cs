@@ -23,6 +23,7 @@ public sealed class AppSettings
 
     // Server runtime
     public bool AutoRestartOnCrash { get; set; } = false;
+    public int AutoStartDelaySeconds { get; set; } = 0;
     public int GracefulShutdownSeconds { get; set; } = 5;
 
     // Launch-Args (strukturiert)

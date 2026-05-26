@@ -285,6 +285,7 @@
     <sys:String x:Key="Settings.LaunchArgs.Extra.Placeholder">e.g. -NOSEAMLESSTRAVEL</sys:String>
     <sys:String x:Key="Settings.LaunchArgs.Hint">Windrose uses automatic NAT punch-through. Fixed ports are not supported — this field is for future undocked args.</sys:String>
     <sys:String x:Key="Settings.LaunchArgs.AutoRestartOnCrash">Watchdog: auto-restart server after crash</sys:String>
+    <sys:String x:Key="Settings.LaunchArgs.AutoStartDelay">Auto-start delay (seconds)</sys:String>
     <sys:String x:Key="Settings.LaunchArgs.GracefulShutdown">Graceful shutdown (seconds)</sys:String>
     <sys:String x:Key="Settings.Steam.Title">Steam &amp; SteamCMD</sys:String>
     <sys:String x:Key="Settings.Steam.AppId">Steam App ID</sys:String>

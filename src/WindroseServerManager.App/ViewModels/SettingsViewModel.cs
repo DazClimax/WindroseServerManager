@@ -43,6 +43,7 @@ public partial class SettingsViewModel : ViewModelBase
     private readonly IWindrosePlusUpdateService _wplusUpdate;
 
     [ObservableProperty] private bool _autoRestartOnCrash;
+    [ObservableProperty] private int _autoStartDelaySeconds;
     [ObservableProperty] private int _gracefulShutdownSeconds;
 
     // Launch-Args (strukturiert)
@@ -121,6 +122,7 @@ public partial class SettingsViewModel : ViewModelBase
         _suppressPersist = true;
         var c = settings.Current;
         _autoRestartOnCrash = c.AutoRestartOnCrash;
+        _autoStartDelaySeconds = c.AutoStartDelaySeconds;
         _gracefulShutdownSeconds = c.GracefulShutdownSeconds;
 
         _logEnabled = c.LogEnabled;
@@ -411,6 +413,12 @@ public partial class SettingsViewModel : ViewModelBase
     {
         if (_suppressPersist) return;
         _ = _settings.UpdateAsync(s => s.AutoRestartOnCrash = value);
+    }
+
+    partial void OnAutoStartDelaySecondsChanged(int value)
+    {
+        if (_suppressPersist) return;
+        _ = _settings.UpdateAsync(s => s.AutoStartDelaySeconds = Math.Clamp(value, 0, 60));
     }
 
     partial void OnGracefulShutdownSecondsChanged(int value)
